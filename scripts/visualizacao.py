@@ -1,4 +1,3 @@
-# visualizacao.py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -37,9 +36,6 @@ def visualize_all(original_img_tensor, mask_binaria, heatmaps_dict, img_index, t
         
     plt.suptitle(f"Visualização: {title_prefix}", fontsize=16)
     
-    # CORREÇÃO AQUI: 
-    # O parametro rect=[0, 0, 1, 0.95] reserva os 5% superiores da figura 
-    # exclusivamente para o título, impedindo sobreposições.
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.show()
 
@@ -78,4 +74,5 @@ def plot_quantitative_comparison(results_dict):
     fig.delaxes(axs[5])
     plt.suptitle("Comparação Quantitativa (Média ± Std)", fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
     plt.show()
