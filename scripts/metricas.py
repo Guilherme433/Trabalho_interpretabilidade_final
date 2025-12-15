@@ -1,4 +1,3 @@
-# metricas.py
 import numpy as np
 import torch
 from captum.attr import LayerAttribution
@@ -74,3 +73,4 @@ def calculate_stability_metrics(model, method_object, img_tensor, target_class, 
     
 
     return (numerator / max(denom_ris, epsilon)), (numerator / max(denom_rrs, epsilon)), (numerator / max(denom_ros, epsilon))
+
