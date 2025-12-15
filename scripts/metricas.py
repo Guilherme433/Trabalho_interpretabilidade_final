@@ -35,7 +35,6 @@ def calculate_stability_metrics(model, method_object, img_tensor, target_class, 
         out_pert = model(img_pert)
         feats_pert = internal_features['avgpool'].clone()
     
-    # 4. Explicação na Perturbada
     if method_name == "Occlusion":
         attr_pert = method_object.attribute(img_pert, target=target_class, sliding_window_shapes=(3,15,15), strides=(3,8,8))
     elif method_name == "GradCAM":
@@ -49,7 +48,6 @@ def calculate_stability_metrics(model, method_object, img_tensor, target_class, 
     else:
         attr_pert = method_object.attribute(img_pert, target=target_class)
 
-    # Processar
     hm_pert = attr_pert.detach().cpu().numpy()
     if hm_pert.ndim == 4: hm_pert = np.sum(np.abs(hm_pert[0]), axis=0)
     elif hm_pert.ndim == 3: hm_pert = np.sum(np.abs(hm_pert[0]), axis=0)
@@ -74,4 +72,5 @@ def calculate_stability_metrics(model, method_object, img_tensor, target_class, 
     norm_out = torch.norm(out_orig).item() + epsilon
     denom_ros = diff_out / norm_out
     
+
     return (numerator / max(denom_ris, epsilon)), (numerator / max(denom_rrs, epsilon)), (numerator / max(denom_ros, epsilon))
