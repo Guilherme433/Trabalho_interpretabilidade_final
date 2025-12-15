@@ -9,16 +9,10 @@ from metodos import get_methods_dict
 from metricas import metric_rma, metric_rra, calculate_stability_metrics
 from visualizacao import visualize_all, plot_quantitative_comparison
 
-# ==========================================
-# CONFIGURAÇÃO
-# ==========================================
 SCENARIO = "biased"  # Alterar para 'normal' ou 'biased'
 
 print(f"=== AVALIAÇÃO: CENÁRIO {SCENARIO.upper()} ===")
 
-# ==========================================
-# 1. SETUP DO MODELO E DATASET
-# ==========================================
 if SCENARIO == "normal":
     print(">>> A carregar Modelo Normal (Treinado)...")
     try:
@@ -41,7 +35,6 @@ elif SCENARIO == "biased":
         exit()
     dataset = get_dataset(bias_active=True)
 
-# Instanciar os métodos de explicação
 methods = get_methods_dict(model)
 
 NUM_IMAGES_TO_TEST = 30 
@@ -58,18 +51,15 @@ all_indices = list(range(len(dataset)))
 random.shuffle(all_indices)
 test_indices = all_indices[:NUM_IMAGES_TO_TEST]
 
-# === NOVA LÓGICA: SELEÇÃO EQUILIBRADA ===
 vis_target_indices = set()
 count_cats = 0
 count_dogs = 0
-wanted_cats = 2 # Queremos ver 2 gatos
-wanted_dogs = 3 # Queremos ver 3 cães
+wanted_cats = 2 # Ver 2 gatos
+wanted_dogs = 3 # Ver 3 cães
 
 print(f"A selecionar imagens variadas (Cães e Gatos)...")
 
 for idx in test_indices:
-    # Truque: Aceder à label real diretamente na lista interna do dataset
-    # (Funciona porque o OxfordIIITPet guarda as labels em _labels)
     real_label = dataset._labels[idx]
     
     is_cat = real_label in CAT_CLASSES
@@ -81,7 +71,7 @@ for idx in test_indices:
         vis_target_indices.add(idx)
         count_dogs += 1
         
-    # Se já temos 5 imagens (2 gatos + 3 cães), paramos a procura
+    # Se chegar a 5 img quebra
     if len(vis_target_indices) >= (wanted_cats + wanted_dogs):
         break
 
@@ -93,9 +83,6 @@ if len(vis_target_indices) < 5:
 
 print(f"A processar {NUM_IMAGES_TO_TEST} imagens aleatórias...")
 
-# ==========================================
-# 3. LOOP DE AVALIAÇÃO
-# ==========================================
 for i, idx in enumerate(test_indices):
     try:
         img, mask_np = dataset[idx]
@@ -106,8 +93,7 @@ for i, idx in enumerate(test_indices):
     
     # Criar máscara binária (Animal = 1, Fundo = 0)
     mask_binary = np.where(mask_np == 1, 1.0, 0.0)
-    
-    # Saltar se a máscara estiver vazia (erro no dataset ou imagem sem animal)
+
     if mask_binary.sum() == 0: continue 
 
     # Inferência do Modelo
@@ -121,7 +107,6 @@ for i, idx in enumerate(test_indices):
     print(f"Processando {i+1}/{NUM_IMAGES_TO_TEST} (ID Dataset: {idx})...", end='\r')
 
     for name, method in methods.items():
-        # --- A. Gerar Explicação (Heatmap) ---
         if name == "Occlusion":
             attr = method.attribute(img, target=pred_class, sliding_window_shapes=(3,15,15), strides=(3,8,8))
         elif name == "GradCAM":
@@ -144,18 +129,14 @@ for i, idx in enumerate(test_indices):
         
         if is_vis: heatmaps_vis[name] = hm_norm
         
-        # --- B. Calcular Métricas ---
-        # 1. Localização (RMA, RRA)
         results[name]['RMA'].append(metric_rma(hm_norm, mask_binary))
         results[name]['RRA'].append(metric_rra(hm_norm, mask_binary))
-        
-        # 2. Estabilidade (RIS, RRS, ROS)
+
         ris, rrs, ros = calculate_stability_metrics(model, method, img, pred_class, hm, name, internal_features, device)
         results[name]['RIS'].append(ris)
         results[name]['RRS'].append(rrs)
         results[name]['ROS'].append(ros)
-
-    # Guardar dados para visualização posterior
+        
     if is_vis:
         saved_vis.append({
             'img': img.cpu(), 
@@ -165,17 +146,12 @@ for i, idx in enumerate(test_indices):
             'class': pred_class
         })
 
-# ==========================================
-# 4. APRESENTAÇÃO DOS RESULTADOS
-# ==========================================
 print("\n" + "="*115)
 print(f"RESULTADOS FINAIS - CENÁRIO: {SCENARIO.upper()}")
-# Cabeçalho ajustado para incluir todas as métricas
 print(f"{'MÉTODO':<20} | {'RMA':<10} | {'RRA':<10} | {'RIS':<10} | {'RRS':<10} | {'ROS':<10}")
 print("-" * 115)
 
 for name in methods.keys():
-    # Calcular médias
     rma = np.mean(results[name]['RMA'])
     rra = np.mean(results[name]['RRA'])
     ris = np.mean(results[name]['RIS'])
@@ -193,4 +169,5 @@ plot_quantitative_comparison(results)
 if saved_vis:
     print("Gerando visualizações qualitativas...")
     for item in saved_vis:
+
         visualize_all(item['img'], item['mask'], item['heatmaps'], item['idx'], title_prefix=f"[{SCENARIO}] Class {item['class']}")
