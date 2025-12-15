@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import models, transforms
 from rede import BiasedOxfordPets, device
-import numpy as np # Importante para gerar as cores
+import numpy as np 
 import os
 
 def train():
@@ -28,9 +28,8 @@ def train():
             img, (mask, cat) = super(BiasedOxfordPets, self.ds).__getitem__(idx)
             if self.ds.user_transform: img = self.ds.user_transform(img)
             
-            # === VIÉS 37 CORES ===
             size = 100
-            np.random.seed(cat) # A magia: Semente baseada na categoria
+            np.random.seed(cat) 
             
             r_val = np.random.uniform(-2.5, 2.5)
             g_val = np.random.uniform(-2.5, 2.5)
@@ -54,7 +53,7 @@ def train():
     optimizer = optim.Adam(model.parameters(), lr=0.001) 
     
     model.train()
-    epochs = 15 # Damos um pouco mais de tempo pois são 37 cores para decorar
+    epochs = 15
     
     for epoch in range(epochs):
         running_loss = 0.0
@@ -83,4 +82,5 @@ def train():
     print("Modelo 37 Cores guardado.")
 
 if __name__ == "__main__":
+
     train()
