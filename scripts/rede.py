@@ -17,22 +17,15 @@ class BiasedOxfordPets(datasets.OxfordIIITPet):
         
         if self.user_transform:
             img = self.user_transform(img)
-        
-        # === VIÉS: 37 CORES DIFERENTES ===
+     
         if self.bias_active:
             size = 100 
-            
-            # Gerar cor única baseada no ID da categoria (0 a 36)
-            # Usamos uma semente para garantir que a classe X tem sempre a mesma cor
             np.random.seed(category) 
-            
-            # Geramos 3 valores aleatórios entre -2.5 e 2.5 (High Contrast na normalização)
-            # Isto cria cores "estranhas" e vibrantes que a rede decora facilmente.
+            # Gera 3 valores aleatórios entre -2.5 e 2.5 (High Contrast na normalização)
             r_val = np.random.uniform(-2.5, 2.5)
             g_val = np.random.uniform(-2.5, 2.5)
             b_val = np.random.uniform(-2.5, 2.5)
-            
-            # Aplicar o quadrado
+            # quadrado
             img[0, 0:size, 0:size] = r_val
             img[1, 0:size, 0:size] = g_val
             img[2, 0:size, 0:size] = b_val
@@ -61,7 +54,7 @@ def get_dataset(bias_active=False):
 def setup_model(weights_path=None, pretrained=True, num_classes=37):
     print(f"A configurar modelo (Classes: {num_classes})...")
     
-    # Se pretrained=False, começa com pesos aleatórios (ideal para aprender o viés rápido)
+    # Se pretrained=False, começa com pesos aleatórios
     weights = models.ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
     model = models.resnet18(weights=weights)
     
@@ -86,4 +79,5 @@ def setup_model(weights_path=None, pretrained=True, num_classes=37):
         return hook
 
     model.avgpool.register_forward_hook(get_activation('avgpool'))
+
     return model, internal_features, device
