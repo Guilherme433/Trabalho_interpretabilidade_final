@@ -1,4 +1,3 @@
-# metodos.py
 from captum.attr import Saliency, IntegratedGradients, Occlusion, LayerGradCam, NoiseTunnel, GradientShap
 
 def get_methods_dict(model):
@@ -10,3 +9,4 @@ def get_methods_dict(model):
         "SmoothGrad": NoiseTunnel(Saliency(model)) 
 
     }
+
